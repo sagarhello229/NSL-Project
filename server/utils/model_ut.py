@@ -1,30 +1,33 @@
 from tensorflow.keras.models import Sequential, load_model as keras_load_model
-from tensorflow.keras.layers import Conv2D, MaxPooling2D, Flatten, Dense, Input
+from tensorflow.keras.layers import Conv2D, MaxPooling2D, Flatten, Dense, Dropout, BatchNormalization, Input
 from tensorflow.keras.optimizers import Adam
 
+from server.utils.preprocess import preprocess_image
+
 def build_cnn_model(input_shape=(96, 96, 3), num_classes=36):
-    """
-    Build and return CNN model based on provided architecture.
-    """
+
     model = Sequential([
-        Input(shape=input_shape),
+    Input(shape=input_shape),
+    Conv2D(32, (3, 3), activation='relu', padding='same'),
+    BatchNormalization(),
+    MaxPooling2D(2, 2),
 
-        Conv2D(32, (3, 3), activation='relu'),
-        MaxPooling2D(2, 2),
+    Conv2D(64, (3, 3), activation='relu', padding='same'),
+    BatchNormalization(),
+    MaxPooling2D(2, 2),
 
-        Conv2D(64, (3, 3), activation='relu'),
-        MaxPooling2D(2, 2),
+    Conv2D(128, (3, 3), activation='relu', padding='same'),
+    BatchNormalization(),
+    MaxPooling2D(2, 2),
 
-        Flatten(),
-        Dense(128, activation='relu'),
-        Dense(num_classes, activation='softmax')
-    ])
+    Flatten(),
+    Dense(256, activation='relu'),
+    Dropout(0.5),
+    Dense(num_classes, activation='softmax')
+])
     return model
 
 def compile_model(model, learning_rate=0.001):
-    """
-    Compile model with Adam optimizer and categorical crossentropy loss.
-    """
     model.compile(
         optimizer=Adam(learning_rate=learning_rate),
         loss='categorical_crossentropy',
@@ -46,8 +49,7 @@ def load_model(filepath):
 
 def predict_label(model, input_data):
     """
-    Predict label index from model output.
-    input_data should be batch of images (numpy array).
+    Predict label index from preprocessed image batch.
     """
-    preds = model.predict(input_data)
+    preds = model.predict(preprocess_image)
     return preds.argmax(axis=-1)[0]
