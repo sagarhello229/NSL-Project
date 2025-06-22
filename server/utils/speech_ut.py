@@ -1,6 +1,7 @@
 from gtts import gTTS
 import os
 from datetime import datetime
+import uuid
 
 def text_to_speech(text, lang='ne', output_dir='static'):
     """
@@ -12,16 +13,24 @@ def text_to_speech(text, lang='ne', output_dir='static'):
         output_dir (str): Folder where the audio file will be saved.
 
     Returns:
-        str: Path to the saved audio file.
+        str: Path to the saved audio file, or None if failed.
     """
-    os.makedirs(output_dir, exist_ok = True)
+    if not text.strip():
+        print("Warning: Empty text provided for speech.")
+        return None
 
-    # overwrite lai avoid garne ra filename generate garne
-    filename = f"speech_{datetime.now().strftime('%Y%m%d_%H%M%S')}.mp3"
+    os.makedirs(output_dir, exist_ok=True)
+
+    # Unique filename using timestamp + uuid
+    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+    unique_id = uuid.uuid4().hex[:6]
+    filename = f"speech_{timestamp}_{unique_id}.mp3"
     output_path = os.path.join(output_dir, filename)
 
-    # speech object banaune
-    tts = gTTS(text=text, lang=lang)
-    tts.save(output_path)
-
-    return output_path
+    try:
+        tts = gTTS(text=text, lang=lang)
+        tts.save(output_path)
+        return output_path
+    except Exception as e:
+        print(f"Error during speech synthesis: {e}")
+        return None
